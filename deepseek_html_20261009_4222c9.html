@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Animal Runner - Choose Your Path & Hero</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
+            z-index: 100;
+            background: rgba(0,0,0,0.4);
+            padding: 10px 20px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+            border: 2px solid rgba(255,215,0,0.6);
+        }
+        #score { margin-right: 20px; }
+        #speed { font-size: 16px; color: #ffaa00; }
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 52px;
+            font-weight: bold;
+            text-shadow: 4px 4px 12px rgba(0,0,0,0.9);
+            display: none;
+            text-align: center;
+            background: rgba(0,0,0,0.7);
+            padding: 40px 80px;
+            border-radius: 30px;
+            z-index: 200;
+            backdrop-filter: blur(8px);
+            border: 4px solid #ffaa00;
+        }
+        #game-over small {
+            display: block;
+            font-size: 20px;
+            margin-top: 20px;
+            color: #ffaa00;
+        }
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.9);
+            font-size: 16px;
+            text-shadow: 1px 1px 3px black;
+            z-index: 100;
+            background: rgba(0,0,0,0.4);
+            padding: 12px 30px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.3);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        #selection-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+            color: white;
+            text-align: center;
+        }
+        #selection-screen h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 8px rgba(0,0,0,0.8);
+            background: linear-gradient(45deg, #ffaa00, #ff6600);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        #selection-screen p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #ccc;
+        }
+        .option-group {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .option-btn {
+            background: rgba(255,255,255,0.1);
+            border: 3px solid #444;
+            border-radius: 20px;
+            padding: 20px 40px;
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            min-width: 120px;
+            backdrop-filter: blur(4px);
+        }
+        .option-btn .icon { font-size: 48px; }
+        .option-btn:hover {
+            transform: scale(1.05);
+            border-color: #ffaa00;
+            background: rgba(255,170,0,0.2);
+        }
+        .option-btn.selected {
+            border-color: #ffaa00;
+            background: rgba(255,170,0,0.3);
+            box-shadow: 0 0 30px rgba(255,170,0,0.5);
+        }
+        #start-btn {
+            margin-top: 20px;
+            padding: 20px 80px;
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff6600, #ffaa00);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255,102,0,0.6);
+            transition: all 0.3s;
+            letter-spacing: 2px;
+        }
+        #start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 50px rgba(255,170,0,0.9);
+        }
+        #start-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Selection Screen -->
+    <div id="selection-screen">
+        <h1>🐾 ANIMAL RUNNER 🐾</h1>
+        <p>Choose your runner and path</p>
+        
+        <div class="option-group" id="runner-options">
+            <div class="option-btn" data-runner="snake">
+                <span class="icon">🐍</span>
+                <span>Snake</span>
+                <small style="font-size:12px;color:#aaa;">Slither fast</small>
+            </div>
+            <div class="option-btn" data-runner="frog">
+                <span class="icon">🐸</span>
+                <span>Frog</span>
+                <small style="font-size:12px;color:#aaa;">Leap high</small>
+            </div>
+            <div class="option-btn" data-runner="horse">
+                <span class="icon">🐎</span>
+                <span>Horse</span>
+                <small style="font-size:12px;color:#aaa;">Gallop swift</small>
+            </div>
+        </div>
+
+        <div class="option-group" id="path-options">
+            <div class="option-btn" data-path="forest">
+                <span class="icon">🌲</span>
+                <span>Forest Path</span>
+                <small style="font-size:12px;color:#aaa;">Natural & wild</small>
+            </div>
+            <div class="option-btn" data-path="road">
+                <span class="icon">🛣️</span>
+                <span>Highway Road</span>
+                <small style="font-size:12px;color:#aaa;">Urban & fast</small>
+            </div>
+            <div class="option-btn" data-path="desert">
+                <span class="icon">🏜️</span>
+                <span>Desert Trail</span>
+                <small style="font-size:12px;color:#aaa;">Hot & sandy</small>
+            </div>
+        </div>
+
+        <button id="start-btn" disabled>▶ START RUN</button>
+    </div>
+
+    <!-- Game UI -->
+    <div id="ui">
+        <span id="score">🏃 0 m</span>
+        <span id="speed">⚡ 0 km/h</span>
+    </div>
+    <div id="game-over">GAME OVER<br><small>Press SPACE or Tap to restart</small></div>
+    <div id="controls">← → / A D Move &nbsp;|&nbsp; SPACE / W / ↑ Jump &nbsp;|&nbsp; R Restart</div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ============================================================
+        // GLOBAL VARIABLES
+        // ============================================================
+        let scene, camera, renderer;
+        let playerGroup;
+        let obstacles = [];
+        let decorations = [];
+        let particles = [];
+        let clock = new THREE.Clock();
+
+        // Game configuration
+        const CONFIG = {
+            laneWidth: 2.5,
+            trackWidth: 9,
+            trackLength: 300,
+            gravity: -0.025,
+            jumpForce: 0.38,
+            baseSpeed: 0.45,
+            maxSpeed: 2.2,
+            speedIncrease: 0.0006,
+            spawnDistance: 14,
+            maxObstacles: 25
+        };
+
+        // Game state
+        const state = {
+            running: false,
+            gameOver: false,
+            score: 0,
+            speed: CONFIG.baseSpeed,
+            lane: 0,
+            targetLane: 0,
+            isJumping: false,
+            jumpVelocity: 0,
+            yPos: 0.5,
+            playerZ: 0,
+            nextSpawnZ: -100,
+            runnerType: 'horse',
+            pathType: 'forest',
+            time: 0
+        };
+
+        // Runner-specific properties
+        const RUNNER_PROPS = {
+            snake: {
+                color: 0x44dd44,
+                bodyColor: 0x33bb33,
+                eyeColor: 0x000000,
+                scale: 0.85,
+                jumpMultiplier: 0.9,
+                speedMultiplier: 1.1,
+                buildModel: buildSnake
+            },
+            frog: {
+                color: 0x66dd44,
+                bodyColor: 0x44cc22,
+                eyeColor: 0xff0000,
+                scale: 0.9,
+                jumpMultiplier: 1.4,
+                speedMultiplier: 0.95,
+                buildModel: buildFrog
+            },
+            horse: {
+                color: 0xcc8844,
+                bodyColor: 0xaa6633,
+                eyeColor: 0x000000,
+                scale: 1.0,
+                jumpMultiplier: 1.0,
+                speedMultiplier: 1.0,
+                buildModel: buildHorse
+            }
+        };
+
+        // Path-specific properties
+        const PATH_PROPS = {
+            forest: {
+                groundColor: 0x3a5a2a,
+                trackColor: 0x6b4e2e,
+                borderColor: 0x4a3a1a,
+                skyColor: 0x87CEEB,
+                fogColor: 0x87CEEB,
+                ambientLight: 0x404060,
+                sunColor: 0xffeedd,
+                obstacleColors: [0x8B4513, 0x654321, 0x2F4F2F],
+                decorBuilder: buildForestDecor
+            },
+            road: {
+                groundColor: 0x555555,
+                trackColor: 0x333333,
+                borderColor: 0xffff00,
+                skyColor: 0x6ca6e0,
+                fogColor: 0x6ca6e0,
+                ambientLight: 0x505070,
+                sunColor: 0xffffff,
+                obstacleColors: [0xff4444, 0xff8800, 0x4444ff],
+                decorBuilder: buildRoadDecor
+            },
+            desert: {
+                groundColor: 0xEDC9AF,
+                trackColor: 0xD2B48C,
+                borderColor: 0xCD853F,
+                skyColor: 0xffaa66,
+                fogColor: 0xffaa66,
+                ambientLight: 0x605040,
+                sunColor: 0xffdd99,
+                obstacleColors: [0x8B4513, 0xA0522D, 0xD2691E],
+                decorBuilder: buildDesertDecor
+            }
+        };
+
+        // ============================================================
+        // INITIALIZATION
+        // ============================================================
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 500);
+            camera.position.set(0, 9, 14);
+            camera.lookAt(0, 2, -20);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+
+            // Setup path and player
+            setupPath(state.pathType);
+            setupPlayer(state.runnerType);
+
+            // Event listeners
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', onKeyDown);
+            window.addEventListener('touchstart', onTouchStart);
+
+            // Start selection screen logic
+            setupSelectionScreen();
+
+            // Start animation loop
+            animate();
+        }
+
+        // ============================================================
+        // SELECTION SCREEN
+        // ============================================================
+        function setupSelectionScreen() {
+            const runnerBtns = document.querySelectorAll('#runner-options .option-btn');
+            const pathBtns = document.querySelectorAll('#path-options .option-btn');
+            const startBtn = document.getElementById('start-btn');
+
+            let selectedRunner = null;
+            let selectedPath = null;
+
+            runnerBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    runnerBtns.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedRunner = btn.dataset.runner;
+                    state.runnerType = selectedRunner;
+                    checkSelection();
+                });
+            });
+
+            pathBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    pathBtns.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedPath = btn.dataset.path;
+                    state.pathType = selectedPath;
+                    checkSelection();
+                });
+            });
+
+            function checkSelection() {
+                if (selectedRunner && selectedPath) {
+                    startBtn.disabled = false;
+                } else {
+                    startBtn.disabled = true;
+                }
+            }
+
+            startBtn.addEventListener('click', () => {
+                document.getElementById('selection-screen').style.display = 'none';
+                startGame();
+            });
+        }
+
+        // ============================================================
+        // START GAME
+        // ============================================================
+        function startGame() {
+            // Clear existing world
+            clearWorld();
+
+            // Setup new world based on selections
+            setupPath(state.pathType);
+            setupPlayer(state.runnerType);
+
+            // Reset state
+            state.running = true;
+            state.gameOver = false;
+            state.score = 0;
+            state.speed = CONFIG.baseSpeed * RUNNER_PROPS[state.runnerType].speedMultiplier;
+            state.lane = 0;
+            state.targetLane = 0;
+            state.isJumping = false;
+            state.jumpVelocity = 0;
+            state.yPos = 0.5;
+            state.playerZ = 0;
+            state.nextSpawnZ = -100;
+            state.time = 0;
+
+            // Update UI
+            document.getElementById('game-over').style.display = 'none';
+            document.getElementById('ui').style.display = 'block';
+
+            // Position camera
+            camera.position.set(0, 9, 14);
+            camera.lookAt(0, 2, -20);
+        }
+
+        // ============================================================
+        // WORLD SETUP
+        // ============================================================
+        function clearWorld() {
+            // Remove all obstacles
+            obstacles.forEach(obj => scene.remove(obj));
+            obstacles = [];
+            
+            // Remove all decorations
+            decorations.forEach(obj => scene.remove(obj));
+            decorations = [];
+
+            // Remove player
+            if (playerGroup) {
+                scene.remove(playerGroup);
+                playerGroup = null;
+            }
+
+            // Clear particles
+            particles.forEach(p => scene.remove(p.mesh));
+            particles = [];
+
+            // Remove lights (we'll re-add them)
+            while(scene.children.length > 0) {
+                scene.remove(scene.children[0]);
+            }
+        }
+
+        function setupPath(pathType) {
+            const props = PATH_PROPS[pathType];
+
+            // Scene atmosphere
+            scene.background = new THREE.Color(props.skyColor);
+            scene.fog = new THREE.Fog(props.fogColor, 40, 160);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(props.ambientLight);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(props.sunColor, 1.2);
+            sunLight.position.set(20, 30, 10);
+            sunLight.castShadow = true;
+            sunLight.receiveShadow = true;
+            sunLight.shadow.mapSize.width = 1024;
+            sunLight.shadow.mapSize.height = 1024;
+            const d = 40;
+            sunLight.shadow.camera.left = -d;
+            sunLight.shadow.camera.right = d;
+            sunLight.shadow.camera.top = d;
+            sunLight.shadow.camera.bottom = -d;
+            sunLight.shadow.camera.near = 1;
+            sunLight.shadow.camera.far = 100;
+            scene.add(sunLight);
+
+            const fillLight = new THREE.PointLight(0x4466ff, 0.4);
+            fillLight.position.set(-10, 10, 20);
+            scene.add(fillLight);
+
+            // Ground plane (wider than track)
+            const groundGeo = new THREE.PlaneGeometry(100, 400);
+            const groundMat = new THREE.MeshStandardMaterial({ color: props.groundColor, roughness: 0.9 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -0.3;
+            ground.position.z = -150;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Main track
+            const trackGeo = new THREE.BoxGeometry(CONFIG.trackWidth, 0.4, CONFIG.trackLength);
+            const trackMat = new THREE.MeshStandardMaterial({ color: props.trackColor, roughness: 0.7 });
+            const track = new THREE.Mesh(trackGeo, trackMat);
+            track.receiveShadow = true;
+            track.position.set(0, -0.2, -CONFIG.trackLength/2 + 20);
+            scene.add(track);
+
+            // Lane markings (three lanes)
+            for (let i = -1; i <= 1; i++) {
+                const laneLine = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.08, 0.45, CONFIG.trackLength),
+                    new THREE.MeshStandardMaterial({ color: props.borderColor, emissive: 0x222222 })
+                );
+                laneLine.position.set(i * CONFIG.laneWidth, 0.02, -CONFIG.trackLength/2 + 20);
+                laneLine.receiveShadow = true;
+                scene.add(laneLine);
+                decorations.push(laneLine);
+            }
+
+            // Side borders
+            const borderMat = new THREE.MeshStandardMaterial({ color: props.borderColor, emissive: 0x111111 });
+            const leftBorder = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.2, CONFIG.trackLength), borderMat);
+            leftBorder.position.set(-CONFIG.trackWidth/2 - 0.2, 0.4, -CONFIG.trackLength/2 + 20);
+            leftBorder.castShadow = true;
+            leftBorder.receiveShadow = true;
+            scene.add(leftBorder);
+            decorations.push(leftBorder);
+            
+            const rightBorder = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.2, CONFIG.trackLength), borderMat);
+            rightBorder.position.set(CONFIG.trackWidth/2 + 0.2, 0.4, -CONFIG.trackLength/2 + 20);
+            rightBorder.castShadow = true;
+            rightBorder.receiveShadow = true;
+            scene.add(rightBorder);
+            decorations.push(rightBorder);
+
+            // Add themed decorations
+            props.decorBuilder();
+        }
+
+        // ============================================================
+        // DECORATION BUILDERS
+        // ============================================================
+        function buildForestDecor() {
+            // Trees
+            for (let i = 0; i < 40; i++) {
+                const side = Math.random() > 0.5 ? 1 : -1;
+                const zPos = -i * 8 + 10;
+                const xPos = side * (CONFIG.trackWidth/2 + 2 + Math.random() * 8);
+                
+                // Tree trunk
+                const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3a1a });
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 3 + Math.random() * 2, 6), trunkMat);
+                trunk.position.set(xPos, 1.5, zPos);
+                trunk.castShadow = true;
+                trunk.receiveShadow = true;
+                scene.add(trunk);
+                decorations.push(trunk);
+
+                // Tree foliage (multiple cones)
+                const greenShade = 0x2a5a2a + Math.floor(Math.random() * 0x003300);
+                const foliageMat = new THREE.MeshStandardMaterial({ color: greenShade });
+                const foliage1 = new THREE.Mesh(new THREE.ConeGeometry(1.5, 2.5, 8), foliageMat);
+                foliage1.position.set(xPos, 3.5, zPos);
+                foliage1.castShadow = true;
+                scene.add(foliage1);
+                decorations.push(foliage1);
+
+                const foliage2 = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2, 8), foliageMat);
+                foliage2.position.set(xPos, 5, zPos);
+                foliage2.castShadow = true;
+                scene.add(foliage2);
+                decorations.push(foliage2);
+            }
+
+            // Rocks
+            for (let i = 0; i < 25; i++) {
+                const side = Math.random() > 0.5 ? 1 : -1;
+                const zPos = -i * 12 + 5;
+                const xPos = side * (CONFIG.trackWidth/2 + 1 + Math.random() * 10);
+                const rockMat = new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.95 });
+                const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.3 + Math.random() * 0.5), rockMat);
+                rock.position.set(xPos, 0.2, zPos);
+                rock.castShadow = true;
+                rock.receiveShadow = true;
+                rock.rotation.set(Math.random(), Math.random(), Math.random());
+                scene.add(rock);
+                decorations.push(rock);
+            }
+        }
+
+        function buildRoadDecor() {
+            // Street lamps
+            for (let i = 0; i < 20; i++) {
+                const side = i % 2 === 0 ? 1 : -1;
+                const zPos = -i * 16;
+                const xPos = side * (CONFIG.trackWidth/2 + 2.5);
+                
+                const poleMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.3 });
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 6, 8), poleMat);
+                pole.position.set(xPos, 3, zPos);
+                pole.castShadow = true;
+                scene.add(pole);
+                decorations.push(pole);
+
+                const lampMat = new THREE.MeshStandardMaterial({ color: 0xffffaa, emissive: 0xffaa00 });
+                const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), lampMat);
+                lamp.position.set(xPos, 6, zPos);
+                lamp.castShadow = true;
+                scene.add(lamp);
+                decorations.push(lamp);
+            }
+
+            // Buildings
+            for (let i = 0; i < 20; i++) {
+                const side = Math.random() > 0.5 ? 1 : -1;
+                const zPos = -i * 20 + 10;
+                const xPos = side * (CONFIG.trackWidth/2 + 8 + Math.random() * 15);
+                const height = 8 + Math.random() * 15;
+                const width = 3 + Math.random() * 4;
+                const depth = 3 + Math.random() * 4;
+                
+                const buildingMat = new THREE.MeshStandardMaterial({ 
+                    color: 0x333333 + Math.floor(Math.random() * 0x444444),
+                    roughness: 0.6
+                });
+                const building = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), buildingMat);
+                building.position.set(xPos, height/2, zPos);
+                building.castShadow = true;
+                building.receiveShadow = true;
+                scene.add(building);
+                decorations.push(building);
+
+                // Windows (emissive)
+                const windowMat = new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffff00 });
+                for (let w = 0; w < 3; w++) {
+                    const window = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.8, 0.1), windowMat);
+                    window.position.set(xPos, 2 + w * 2.5, zPos + depth/2 + 0.05);
+                    scene.add(window);
+                    decorations.push(window);
+                }
+            }
+        }
+
+        function buildDesertDecor() {
+            // Cacti
+            for (let i = 0; i < 30; i++) {
+                const side = Math.random() > 0.5 ? 1 : -1;
+                const zPos = -i * 10 + 5;
+                const xPos = side * (CONFIG.trackWidth/2 + 2 + Math.random() * 10);
+                
+                const cactusMat = new THREE.MeshStandardMaterial({ color: 0x2a6a2a });
+                const cactusBody = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 2 + Math.random() * 1.5, 6), cactusMat);
+                cactusBody.position.set(xPos, 1, zPos);
+                cactusBody.castShadow = true;
+                cactusBody.receiveShadow = true;
+                scene.add(cactusBody);
+                decorations.push(cactusBody);
+
+                // Arms
+                const armMat = new THREE.MeshStandardMaterial({ color: 0x2a6a2a });
+                const arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1, 6), armMat);
+                arm1.position.set(xPos - 0.6, 1.8, zPos);
+                arm1.rotation.z = 0.7;
+                arm1.castShadow = true;
+                scene.add(arm1);
+                decorations.push(arm1);
+
+                const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1, 6), armMat);
+                arm2.position.set(xPos + 0.6, 1.5, zPos);
+                arm2.rotation.z = -0.7;
+                arm2.castShadow = true;
+                scene.add(arm2);
+                decorations.push(arm2);
+            }
+
+            // Rocks
+            for (let i = 0; i < 25; i++) {
+                const side = Math.random() > 0.5 ? 1 : -1;
+                const zPos = -i * 12 + 5;
+                const xPos = side * (CONFIG.trackWidth/2 + 1 + Math.random() * 12);
+                const rockMat = new THREE.MeshStandardMaterial({ color: 0xaa8866, roughness: 1.0 });
+                const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.3 + Math.random() * 0.7), rockMat);
+                rock.position.set(xPos, 0.2, zPos);
+                rock.castShadow = true;
+                rock.receiveShadow = true;
+                rock.rotation.set(Math.random(), Math.random(), Math.random());
+                scene.add(rock);
+                decorations.push(rock);
+            }
+        }
+
+        // ============================================================
+        // PLAYER MODELS
+        // ============================================================
+        function setupPlayer(runnerType) {
+            const props = RUNNER_PROPS[runnerType];
+            playerGroup = new THREE.Group();
+            
+            props.buildModel(playerGroup, props);
+            
+            playerGroup.scale.set(props.scale, props.scale, props.scale);
+            playerGroup.position.set(0, 0.5, 0);
+            playerGroup.castShadow = true;
+            playerGroup.receiveShadow = true;
+            scene.add(playerGroup);
+        }
+
+        function buildSnake(group, props) {
+            // Snake body (segmented cylinders)
+            const bodyMat = new THREE.MeshStandardMaterial({ color: props.bodyColor });
+            const headMat = new THREE.MeshStandardMaterial({ color: props.color });
+            
+            // Head
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 12), headMat);
+            head.position.y = 1.0;
+            head.position.z = 0.5;
+            head.castShadow = true;
+            head.receiveShadow = true;
+            group.add(head);
+
+            // Eyes
+            const eyeMat = new THREE.MeshStandardMaterial({ color: props.eyeColor });
+            const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), eyeMat);
+            eyeL.position.set(-0.2, 1.15, 0.85);
+            group.add(eyeL);
+            const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), eyeMat);
+            eyeR.position.set(0.2, 1.15, 0.85);
+            group.add(eyeR);
+
+            // Tongue
+            const tongueMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+            const tongue = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.6), tongueMat);
+            tongue.position.set(0, 0.9, 1.1);
+            tongue.rotation.x = 0.3;
+            group.add(tongue);
+
+            // Body segments
+            for (let i = 0; i < 6; i++) {
+                const seg = new THREE.Mesh(new THREE.SphereGeometry(0.4 - i * 0.03, 10, 10), bodyMat);
+                seg.position.set(0, 0.8 - i * 0.05, -0.3 - i * 0.6);
+                seg.castShadow = true;
+                seg.receiveShadow = true;
+                group.add(seg);
+            }
+
+            // Tail
+            const tailMat = new THREE.MeshStandardMaterial({ color: props.color });
+            const tail = new THREE.Mesh(new THREE.ConeGeometry(0.3, 1.2, 8), tailMat);
+            tail.position.set(0, 0.5, -3.8);
+            tail.rotation.x = Math.PI / 2;
+            tail.castShadow = true;
+            group.add(tail);
+        }
+
+        function buildFrog(group, props) {
+            const bodyMat = new THREE.MeshStandardMaterial({ color: props.bodyColor });
+            const headMat = new THREE.MeshStandardMaterial({ color: props.color });
+            
+            // Body
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 12), bodyMat);
+            body.scale.set(1, 0.8, 1.3);
+            body.position.y = 0.8;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+
+            // Head
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), headMat);
+            head.position.set(0, 1.3, 0.4);
+            head.castShadow = true;
+            group.add(head);
+
+            // Big frog eyes
+            const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const eyePupilMat = new THREE.MeshStandardMaterial({ color: props.eyeColor });
+            
+            const eyeWhiteL = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 10), eyeWhiteMat);
+            eyeWhiteL.position.set(-0.3, 1.65, 0.5);
+            group.add(eyeWhiteL);
+            const pupilL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), eyePupilMat);
+            pupilL.position.set(-0.3, 1.65, 0.72);
+            group.add(pupilL);
+
+            const eyeWhiteR = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 10), eyeWhiteMat);
+            eyeWhiteR.position.set(0.3, 1.65, 0.5);
+            group.add(eyeWhiteR);
+            const pupilR = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), eyePupilMat);
+            pupilR.position.set(0.3, 1.65, 0.72);
+            group.add(pupilR);
+
+            // Mouth
+            const mouthMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.1), mouthMat);
+            mouth.position.set(0, 1.1, 0.9);
+            group.add(mouth);
+
+            // Front legs
+            const legMat = new THREE.MeshStandardMaterial({ color: props.bodyColor });
+            const legFL = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.7, 6), legMat);
+            legFL.position.set(-0.5, 0.35, 0.5);
+            legFL.rotation.x = 0.3;
+            legFL.castShadow = true;
+            group.add(legFL);
+            
+            const legFR = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.7, 6), legMat);
+            legFR.position.set(0.5, 0.35, 0.5);
+            legFR.rotation.x = 0.3;
+            legFR.castShadow = true;
+            group.add(legFR);
+
+            // Back legs (bigger for jumping)
+            const legBL = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.8, 6), legMat);
+            legBL.position.set(-0.55, 0.3, -0.4);
+            legBL.rotation.x = -0.5;
+            legBL.castShadow = true;
+            group.add(legBL);
+            
+            const legBR = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.8, 6), legMat);
+            legBR.position.set(0.55, 0.3, -0.4);
+            legBR.rotation.x = -0.5;
+            legBR.castShadow = true;
+            group.add(legBR);
+        }
+
+        function buildHorse(group, props) {
+            const bodyMat = new THREE.MeshStandardMaterial({ color: props.bodyColor });
+            const headMat = new THREE.MeshStandardMaterial({ color: props.color });
+            
+            // Body
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 1.8, 10), bodyMat);
+            body.rotation.z = Math.PI / 2;
+            body.position.y = 0.9;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+
+            // Chest
+            const chest = new THREE.Mesh(new THREE.SphereGeometry(0.75, 10, 10), bodyMat);
+            chest.position.set(0, 0.9, 1.0);
+            chest.castShadow = true;
+            group.add(chest);
+
+            // Neck
+            const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 0.9, 8), bodyMat);
+            neck.position.set(0, 1.5, 1.3);
+            neck.rotation.x = -0.5;
+            neck.castShadow = true;
+            group.add(neck);
+
+            // Head
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.45, 10, 10), headMat);
+            head.position.set(0, 2.0, 1.8);
+            head.castShadow = true;
+            group.add(head);
+
+            // Snout
+            const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 0.5, 8), headMat);
+            snout.rotation.x = Math.PI / 2;
+            snout.position.set(0, 1.85, 2.2);
+            snout.castShadow = true;
+            group.add(snout);
+
+            // Eyes
+            const eyeMat = new THREE.MeshStandardMaterial({ color: props.eyeColor });
+            const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), eyeMat);
+            eyeL.position.set(-0.25, 2.15, 2.0);
+            group.add(eyeL);
+            const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), eyeMat);
+            eyeR.position.set(0.25, 2.15, 2.0);
+            group.add(eyeR);
+
+            // Ears
+            const earMat = new THREE.MeshStandardMaterial({ color: props.color });
+            const earL = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.4, 6), earMat);
+            earL.position.set(-0.2, 2.4, 1.6);
+            earL.rotation.z = 0.3;
+            group.add(earL);
+            const earR = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.4, 6), earMat);
+            earR.position.set(0.2, 2.4, 1.6);
+            earR.rotation.z = -0.3;
+            group.add(earR);
+
+            // Mane
+            const maneMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+            for (let i = 0; i < 5; i++) {
+                const maneSeg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.3, 0.2), maneMat);
+                maneSeg.position.set(0, 2.0 - i * 0.15, 1.3 + i * 0.1);
+                maneSeg.rotation.x = -0.2;
+                group.add(maneSeg);
+            }
+
+            // Legs
+            const legMat = new THREE.MeshStandardMaterial({ color: props.bodyColor });
+            const legPositions = [
+                [-0.5, 0.35, 0.9], [0.5, 0.35, 0.9],
+                [-0.5, 0.35, -0.6], [0.5, 0.35, -0.6]
+            ];
+            legPositions.forEach(pos => {
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.8, 6), legMat);
+                leg.position.set(...pos);
+                leg.castShadow = true;
+                group.add(leg);
+            });
+
+            // Tail
+            const tailMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+            const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.05, 1.2, 6), tailMat);
+            tail.position.set(0, 1.0, -1.4);
+            tail.rotation.x = 0.5;
+            tail.castShadow = true;
+            group.add(tail);
+        }
+
+        // ============================================================
+        // OBSTACLE SPAWNING
+        // ============================================================
+        function spawnObstacle(zPos) {
+            const pathProps = PATH_PROPS[state.pathType];
+            const colors = pathProps.obstacleColors;
+            
+            // Random obstacle type
+            const type = Math.floor(Math.random() * 4);
+            let obstacle;
+            let lane;
+            
+            // Sometimes spawn in random lane, sometimes center
+            if (type === 3) {
+                lane = 0; // center
+            } else {
+                lane = (Math.floor(Math.random() * 3) - 1) * CONFIG.laneWidth;
+            }
+
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const mat = new THREE.MeshStandardMaterial({ color: color, emissive: 0x111111, roughness: 0.5 });
+
+            switch (type) {
+                case 0: // Low block (easy to jump)
+                    obstacle = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.8, 1.4), mat);
+                    obstacle.position.set(lane, 0.4, zPos);
+                    break;
+                case 1: // Tall block (must move around)
+                    obstacle = new THREE.Mesh(new THREE.BoxGeometry(1.0, 2.0, 1.0), mat);
+                    obstacle.position.set(lane, 1.0, zPos);
+                    break;
+                case 2: // Wide low obstacle
+                    obstacle = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.6, 1.2), mat);
+                    obstacle.position.set(lane, 0.3, zPos);
+                    break;
+                case 3: // Full lane blocker (must jump or switch lane)
+                    obstacle = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.2, 1.8), mat);
+                    obstacle.position.set(0, 0.6, zPos);
+                    break;
+            }
+
+            if (obstacle) {
+                obstacle.castShadow = true;
+                obstacle.receiveShadow = true;
+                scene.add(obstacle);
+                obstacles.push(obstacle);
+            }
+        }
+
+        // ============================================================
+        // INPUT HANDLERS
+        // ============================================================
+        function onKeyDown(e) {
+            if (!state.running) return;
+            
+            if (state.gameOver) {
+                if (e.code === 'Space' || e.key === 'r' || e.key === 'R') {
+                    restartGame();
+                }
+                return;
+            }
+
+            switch (e.key) {
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    if (state.targetLane > -1) state.targetLane--;
+                    e.preventDefault();
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    if (state.targetLane < 1) state.targetLane++;
+                    e.preventDefault();
+                    break;
+                case ' ':
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    if (!state.isJumping) {
+                        state.isJumping = true;
+                        const jumpMult = RUNNER_PROPS[state.runnerType].jumpMultiplier;
+                        state.jumpVelocity = CONFIG.jumpForce * jumpMult;
+                    }
+                    e.preventDefault();
+                    break;
+                case 'r':
+                case 'R':
+                    restartGame();
+                    break;
+            }
+        }
+
+        function onTouchStart(e) {
+            if (!state.running) return;
+            
+            if (state.gameOver) {
+                restartGame();
+                return;
+            }
+
+            const touchX = e.touches[0].clientX;
+            const halfWidth = window.innerWidth / 2;
+            
+            if (touchX < halfWidth * 0.4) {
+                // Left
+                if (state.targetLane > -1) state.targetLane--;
+            } else if (touchX > halfWidth * 1.6) {
+                // Right
+                if (state.targetLane < 1) state.targetLane++;
+            } else {
+                // Jump
+                if (!state.isJumping) {
+                    state.isJumping = true;
+                    const jumpMult = RUNNER_PROPS[state.runnerType].jumpMultiplier;
+                    state.jumpVelocity = CONFIG.jumpForce * jumpMult;
+                }
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // ============================================================
+        // RESTART GAME
+        // ============================================================
+        function restartGame() {
+            // Clear world
+            clearWorld();
+            
+            // Re-setup
+            setupPath(state.pathType);
+            setupPlayer(state.runnerType);
+
+            // Reset state
+            state.running = true;
+            state.gameOver = false;
+            state.score = 0;
+            state.speed = CONFIG.baseSpeed * RUNNER_PROPS[state.runnerType].speedMultiplier;
+            state.lane = 0;
+            state.targetLane = 0;
+            state.isJumping = false;
+            state.jumpVelocity = 0;
+            state.yPos = 0.5;
+            state.playerZ = 0;
+            state.nextSpawnZ = -100;
+            state.time = 0;
+
+            // Update UI
+            document.getElementById('game-over').style.display = 'none';
+        }
+
+        // ============================================================
+        // ANIMATION LOOP
+        // ============================================================
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = Math.min(clock.getDelta(), 0.05); // Cap delta
+
+            if (state.running && !state.gameOver) {
+                updateGame(delta);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function updateGame(delta) {
+            state.time += delta;
+
+            // Increase speed
+            state.speed = Math.min(state.speed + CONFIG.speedIncrease * delta, CONFIG.maxSpeed * RUNNER_PROPS[state.runnerType].speedMultiplier);
+            
+            // Update score
+            state.score += state.speed * 12 * delta;
+            
+            // Update UI
+            document.getElementById('score').textContent = `🏃 ${Math.floor(state.score)} m`;
+            document.getElementById('speed').textContent = `⚡ ${Math.floor(state.speed * 60)} km/h`;
+
+            // Move player forward
+            state.playerZ -= state.speed * delta * 25;
+            playerGroup.position.z = state.playerZ;
+
+            // Camera follow
+            camera.position.z = state.playerZ + 14;
+            camera.position.x = playerGroup.position.x * 0.4;
+            camera.lookAt(playerGroup.position.x * 0.5, 2, state.playerZ - 18);
+
+            // Lane movement (smooth)
+            const targetX = state.targetLane * CONFIG.laneWidth;
+            playerGroup.position.x += (targetX - playerGroup.position.x) * 0.18;
+
+            // Jump physics
+            if (state.isJumping) {
+                state.jumpVelocity += CONFIG.gravity * delta * 60;
+                state.yPos += state.jumpVelocity * delta * 60;
+                
+                if (state.yPos <= 0.5) {
+                    state.yPos = 0.5;
+                    state.isJumping = false;
+                    state.jumpVelocity = 0;
+                }
+            }
+            playerGroup.position.y = state.yPos;
+
+            // Running animation
+            animatePlayer(delta);
+
+            // Update obstacles
+            updateObstacles(delta);
+
+            // Spawn new obstacles
+            while (state.nextSpawnZ > state.playerZ - 250) {
+                spawnObstacle(state.nextSpawnZ);
+                state.nextSpawnZ -= CONFIG.spawnDistance + Math.random() * 6;
+            }
+
+            // Reset spawn pointer if needed
+            if (state.nextSpawnZ < state.playerZ - 300) {
+                state.nextSpawnZ = state.playerZ - 200;
+            }
+
+            // Update decorations (move with world)
+            decorations.forEach(decor => {
+                // Only move if it's not part of the track (track stays put)
+                if (decor.position.z > state.playerZ - 50) {
+                    // No need to move; player moving forward is the illusion
+                }
+            });
+        }
+
+        function animatePlayer(delta) {
+            if (!playerGroup) return;
+            
+            const time = state.time;
+            const speedFactor = state.speed * 2;
+            
+            // Different animation based on runner type
+            switch (state.runnerType) {
+                case 'snake':
+                    // Snake slither
+                    for (let i = 0; i < playerGroup.children.length; i++) {
+                        const child = playerGroup.children[i];
+                        if (i > 0 && i < 8) { // Body segments
+                            child.position.x = Math.sin(time * speedFactor + i * 0.8) * 0.15;
+                        }
+                    }
+                    break;
+
+                case 'frog':
+                    // Frog hop animation
+                    if (!state.isJumping) {
+                        const hop = Math.abs(Math.sin(time * speedFactor * 0.8)) * 0.1;
+                        playerGroup.position.y = 0.5 + hop;
+                    }
+                    // Leg animation
+                    const legSwing = Math.sin(time * speedFactor) * 0.4;
+                    if (playerGroup.children[5]) playerGroup.children[5].rotation.x = 0.3 + legSwing;
+                    if (playerGroup.children[6]) playerGroup.children[6].rotation.x = 0.3 - legSwing;
+                    if (playerGroup.children[7]) playerGroup.children[7].rotation.x = -0.5 - legSwing;
+                    if (playerGroup.children[8]) playerGroup.children[8].rotation.x = -0.5 + legSwing;
+                    break;
+
+                case 'horse':
+                    // Gallop animation
+                    const gallop = Math.sin(time * speedFactor * 0.7);
+                    if (playerGroup.children[6]) playerGroup.children[6].rotation.x = gallop * 0.5;
+                    if (playerGroup.children[7]) playerGroup.children[7].rotation.x = -gallop * 0.5;
+                    if (playerGroup.children[8]) playerGroup.children[8].rotation.x = -gallop * 0.5;
+                    if (playerGroup.children[9]) playerGroup.children[9].rotation.x = gallop * 0.5;
+                    break;
+            }
+        }
+
+        function updateObstacles(delta) {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                
+                // Collision detection
+                const playerBox = new THREE.Box3().setFromObject(playerGroup);
+                const obsBox = new THREE.Box3().setFromObject(obs);
+                
+                if (playerBox.intersectsBox(obsBox)) {
+                    // Game over!
+                    state.gameOver = true;
+                    state.running = false;
+                    document.getElementById('game-over').style.display = 'block';
+                    return;
+                }
+                
+                // Remove obstacles behind player
+                if (obs.position.z > state.playerZ + 20) {
+                    scene.remove(obs);
+                    obstacles.splice(i, 1);
+                }
+            }
+        }
+
+        // ============================================================
+        // START THE APP
+        // ============================================================
+        init();
+    </script>
+</body>
+</html>
